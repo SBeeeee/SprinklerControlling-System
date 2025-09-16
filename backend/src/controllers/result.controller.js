@@ -23,7 +23,7 @@ export const uploadResult = async (req, res) => {
 
 export const listResults = async (req, res) => {
   try {
-    const results = await getResultsByUser(req.user.id);
+    const results = await getResultsByUser();
     res.json(results);
   } catch (err) {
     res.status(400).json({ error: err.message });

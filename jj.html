@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crop Health Checker 🌱</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e6f4ea;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2f855a;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      color: #2f855a;
+      margin-bottom: 15px;
+    }
+
+    input[type="file"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #2f855a;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background-color: #276749;
+    }
+
+    .result img {
+      max-width: 300px;
+      border-radius: 10px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      border: 1px solid #c6f6d5;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .history-item img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .history-item div {
+      font-size: 0.9rem;
+    }
+
+    @media(max-width: 600px) {
+      .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .history-item img {
+        width: 100%;
+        height: auto;
+      }
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+
+    pre {
+      background-color: #f0fff4;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Crop Health Checker 🌾</h1>
+
+    <!-- Upload Form -->
+    <div class="card">
+      <h2>Upload Crop Image</h2>
+      <form id="sprinklerForm" enctype="multipart/form-data">
+        <label>Soil: <input type="text" name="soil" value="67" required></label><br><br>
+        <label>Moisture: <input type="text" name="moisture" value="67" required></label><br><br>
+        <label>Temperature: <input type="text" name="temperature" value="909" required></label><br><br>
+        <label>Humidity: <input type="text" name="humidity" value="89" required></label><br><br>
+        <label>Image: <input type="file" name="image" required></label><br><br>
+        <label>Device ID: <input type="text" name="device_id" value="67" required></label><br><br>
+        <button type="submit">Upload & Generate Result</button>
+        <p class="error" id="errorMsg"></p>
+      </form>
+    </div>
+
+    <!-- Latest Result -->
+    <div id="latestResult" class="card result" style="display:none;">
+      <h2>Latest Result</h2>
+      <div id="resultContent"></div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <h2>History</h2>
+      <div id="history"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('sprinklerForm');
+    const responseBox = document.getElementById('response');
+    const latestResult = document.getElementById("latestResult");
+    const resultContent = document.getElementById("resultContent");
+    const historyDiv = document.getElementById("history");
+    const errorMsg = document.getElementById("errorMsg");
+
+    const API_URL = "https://sprinklercontrolling-system.onrender.com/api/results";
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = "";
+
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch(`${API_URL}/generate`, {
+          method: "POST",
+          body: formData
+        });
+
+        console.log("POST /generate status:", res.status);
+
+        if (!res.ok) throw new Error("Upload failed with status " + res.status);
+
+        const data = await res.json();
+        console.log("POST /generate response:", data);
+
+        if (data.result) {
+          showLatestResult(data.result);
+          fetchHistory();
+        } else {
+          throw new Error("No result returned from API");
+        }
+      } catch (err) {
+        console.error(err);
+        errorMsg.textContent = err.message;
+      }
+    });
+
+    function showLatestResult(result) {
+      latestResult.style.display = "block";
+      resultContent.innerHTML = `
+        <img src="https://sprinklercontrolling-system.onrender.com${result.imageUrl}" alt="Crop Image">
+        <p><strong>Device ID:</strong> ${result.device_id}</p>
+        <p><strong>Soil:</strong> ${result.soil}</p>
+        <p><strong>Moisture:</strong> ${result.moisture}</p>
+        <p><strong>Temperature:</strong> ${result.temperature}</p>
+        <p><strong>Humidity:</strong> ${result.humidity}</p>
+        <p><strong>Score:</strong> ${result.score.toFixed(2)}</p>
+        <p><strong>Decision:</strong> <strong style="color:#2f855a">${result.decision}</strong></p>
+        <p><strong>Created At:</strong> ${new Date(result.createdAt).toLocaleString()}</p>
+      `;
+    }
+
+    async function fetchHistory() {
+      try {
+        const res = await fetch(`${API_URL}`);
+        console.log("GET / history status:", res.status);
+
+        if (!res.ok) throw new Error("Failed to fetch history");
+
+        const data = await res.json();
+        console.log("GET / history response:", data);
+
+        historyDiv.innerHTML = "";
+        data.forEach(result => {
+          historyDiv.innerHTML += `
+            <div class="history-item">
+              <img src="https://sprinklercontrolling-system.onrender.com${result.imageUrl}" alt="Crop Image">
+
+              <div>
+                <p><strong>Decision:</strong> ${result.decision}</p>
+                <p><strong>Score:</strong> ${result.score.toFixed(2)}</p>
+                <p><strong>Date:</strong> ${new Date(result.createdAt).toLocaleString()}</p>
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        console.error(err);
+        historyDiv.innerHTML = `<p class="error">${err.message}</p>`;
+      }
+    }
+
+    fetchHistory(); // Load history on page load
+  </script>
+</body>
+</html>

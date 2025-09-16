@@ -21,6 +21,6 @@ export const createResult = async (farmerId, { device_id, soil, moisture, temper
   return result;
 };
 
-export const getResultsByUser = async (userId) => {
-  return Result.find({ farmer_id: userId }).sort({ createdAt: -1 });
+export const getResultsByUser = async () => {
+  return Result.find().sort({ createdAt: -1 });
 };
