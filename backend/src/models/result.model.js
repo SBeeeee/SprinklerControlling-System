@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const resultSchema = new mongoose.Schema({
-  device_id: { type: String, required: true },
+  device_id: { type: String,  },
   farmer_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   soil: { type: Number },         
   moisture: { type: Number },     
