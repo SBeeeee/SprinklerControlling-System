@@ -9,7 +9,7 @@ const resultSchema = new mongoose.Schema({
   humidity: { type: Number }, 
   imageUrl: { type: String },       
   score: { type: Number }, 
-  decision: { type: String,required: true },
+  decision: { type: String},
   createdAt: { type: Date, default: Date.now }
 });
 
